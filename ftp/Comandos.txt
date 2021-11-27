@@ -1,0 +1,58 @@
+Pasos para desplegar proyecto:
+1. Asegurarse de tener en la carpeta principal mangement los siguientes directorios:
+ * docker-compose-develop
+ * intranet
+ * db-migrations
+ 
+2. Cada vez que desee construir el entorno desde cero ejecutar:
+  sudo docker-compose -f docker-compose-develop/docker-compose.yml -f docker-compose-develop/docker-compose.override.yml build
+  
+3. Para levantar los contenedores ejecutar:
+  sudo docker-compose -f docker-compose-develop/docker-compose.yml -f docker-compose-develop/docker-compose.override.yml up -d
+  
+4. Para apagarlos:
+  sudo docker-compose -f docker-compose-develop/docker-compose.yml down
+
+5. Si hace build debe ejecutar los siguientes comandos para intranet: 
+  sudo docker exec -it management-intranet cp .env.example .env
+  sudo docker exec -it management-intranet composer install
+  sudo docker exec -it management-intranet php artisan key:generate
+
+6. Si hace build debe ejecutar los siguientes comandos para db-migrations: 
+  sudo docker exec -it management-db-migrations cp .env.example .env
+  sudo docker exec -it management-db-migrations composer install
+  sudo docker exec -it management-db-migrations php artisan key:generate
+  
+Completa tu archivo .env y ejecuta:
+  sudo docker exec -it management-db-migrations php artisan migrate
+  
+Importante: el host de la base de datos es el nombre del contenedor: DB_HOST=management-postgres
+  
+Cambiar contraseña de usuario:
+  sudo docker exec -it management-db-migrations php artisan tinker
+
+
+7. Ver la red con 
+  sudo docker network ls
+
+
+8. Inspeccionar con 
+  sudo docker inspect docker-compose-develop_savmangement-network
+
+
+Comandos
+
+Ingresar a Bash:
+sudo docker-compose -f docker-compose-develop/docker-compose.yml exec db-postgres bash
+
+Acceder a nginx (no trabaja con bash :|):
+sudo docker exec -it management-webserver sh
+
+Ver logs de contenedor:
+sudo docker logs -f management-webserver
+
+Listar contenedores con tamaño 
+sudo docker ps -s
+
+Limpiar todo lo de docker
+docker system prune

@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  ftpd-server:
+    image: stilliard/pure-ftpd:hardened
+    container_name: ftpd
+    ports:
+      - "21:21"
+      - "30000-30009:30000-30009"
+      - "10000-10009:10000-10009"
+    volumes: 
+      - ./data:/home/savne
+      - ./passwd:/etc/pure-ftpd/passwd
+    environment:
+      FTP_PASSIVE_PORTS: "10000:10009"
+      PUBLICHOST: "localhost"
+      FTP_USER_NAME: savne
+      FTP_USER_PASS: savne
+      FTP_USER_HOME: /home/savne
+    restart: always
