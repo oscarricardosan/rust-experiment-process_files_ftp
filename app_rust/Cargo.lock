@@ -28,12 +28,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "chrono"
+version = "0.4.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
+dependencies = [
+ "libc",
+ "num-integer",
+ "num-traits",
+ "time",
+ "winapi 0.3.9",
+]
+
+[[package]]
 name = "ftp"
 version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "542951aad0071952c27409e3bd7cb62d1a3ad419c4e7314106bf994e0083ad5d"
 dependencies = [
- "chrono",
+ "chrono 0.2.25",
  "lazy_static",
  "regex",
 ]
@@ -114,6 +127,7 @@ dependencies = [
 name = "process_files_in_ftp"
 version = "0.1.0"
 dependencies = [
+ "chrono 0.4.19",
  "ftp",
 ]
 

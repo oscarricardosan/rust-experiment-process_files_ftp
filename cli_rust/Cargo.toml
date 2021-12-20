@@ -1,10 +1,10 @@
 [package]
-name = "process_files_in_ftp"
+name = "test_tui"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ftp = "3.0.1"
-chrono = "0.4"
+tui = { version = "0.15", features = ["crossterm"], default-features = false }
+crossterm = "0.19"
