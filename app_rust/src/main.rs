@@ -1,33 +1,30 @@
-extern crate ftp;
-
 use std::{fs};
+use ftp_client::prelude::Client;
 use chrono::Local;
-use ftp::{FtpStream};
-use ftp::types::{FileType};
 
-fn main() {
-    let mut ftp = FtpStream::connect("127.0.0.1:21").unwrap();
-    let _ = ftp.login("savne", "savne").unwrap_or_else(|_e|{
-        panic!("Error de Usuario o contraseña");
-    });
-    ftp.transfer_type(FileType::Binary).unwrap();
+fn main() -> Result<(), ftp_client::error::Error> {
+    let mut client = Client::connect("xxx", "xxx", "xx")?;
+    let files = client.list_names("/")?;
+    println!("Listando archivos: ");
+    for (index, file_origin_path) in files.iter().enumerate() {
+        print!("{}) {} Procesando archivo {}. ", index, Local::now().format("%Y-%m-%d %H:%M:%S") ,file_origin_path);
+        client.binary().unwrap();
 
-    let files= ftp.nlst(Some("/"));
-
-    for (index, file_name) in files.as_ref().unwrap().iter().enumerate(){
-        print!("{}) {} Procesando archivo {}. ", index, Local::now().format("%Y-%m-%d %H:%M:%S") ,file_name);
-
-        match ftp.simple_retr(file_name) {
+        match client.retrieve_file(&file_origin_path) {
             Ok(retr)=>{
-                fs::write(format!("{}/{}", "tmp", file_name), retr.into_inner()).unwrap();
-                println!("Finalizado exitosamente.");
+                let part_name = file_origin_path.split('/');
+                let destination = format!("./{}/{}", "tmp", part_name.last().unwrap());
+                fs::write(&destination, retr).unwrap();
+                println!("Finalizado exitosamente. Se guarda archivo en {}", destination);
             }
             Err(error)=> {
                 println!(
                     "Error al descargar archivo {}: {}   <Posible causa del error: el archivo es una carpeta>",
-                    file_name, error.to_string()
+                    file_origin_path, error.to_string()
                 );
             }
         }
     }
+    Ok(())
+
 }

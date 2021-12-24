@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  app-rust-to-ftp:
+    container_name: app-rust-to-ftp
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    #volumes: 
+      #- .:/usr/src/myapp
