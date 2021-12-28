@@ -1,13 +1,26 @@
-use std::{fs};
+mod config_app;
+
+use std::{fs, io};
+use std::io::Write;
 use ftp_client::prelude::Client;
 use chrono::Local;
+use crate::config_app::ConfigApp;
 
-fn main() -> Result<(), ftp_client::error::Error> {
-    let mut client = Client::connect("xxx", "xxx", "xx")?;
-    let files = client.list_names("/")?;
-    println!("Listando archivos: ");
+
+fn main() {
+    let mut config_app = ConfigApp::new();
+
+    if !config_app.is_configured(){
+        config_app.require_config_data();
+    }
+
+    let mut client = Client::connect(&config_app.ftp_url, &config_app.ftp_user, &config_app.ftp_password).unwrap();
+    let files = client.list_names(&config_app.directory_guias_cpm).unwrap();
+    println!("=> Se inicia procesamiento de {} archivo(s): ", files.len());
     for (index, file_origin_path) in files.iter().enumerate() {
-        print!("{}) {} Procesando archivo {}. ", index, Local::now().format("%Y-%m-%d %H:%M:%S") ,file_origin_path);
+        print!(" * {}) {} Procesando archivo {}. ", index, Local::now().format("%Y-%m-%d %H:%M:%S") ,file_origin_path);
+        io::stdout().flush().unwrap();
+
         client.binary().unwrap();
 
         match client.retrieve_file(&file_origin_path) {
@@ -15,16 +28,16 @@ fn main() -> Result<(), ftp_client::error::Error> {
                 let part_name = file_origin_path.split('/');
                 let destination = format!("./{}/{}", "tmp", part_name.last().unwrap());
                 fs::write(&destination, retr).unwrap();
-                println!("Finalizado exitosamente. Se guarda archivo en {}", destination);
+                println!("Guardado en {}", destination);
             }
             Err(error)=> {
                 println!(
-                    "Error al descargar archivo {}: {}   <Posible causa del error: el archivo es una carpeta>",
-                    file_origin_path, error.to_string()
+                    "Error {}. <Posible causa del error: el archivo es una carpeta>",
+                    error.to_string()
                 );
             }
         }
     }
-    Ok(())
+    println!("=> Proceso finalizado");
 
 }
