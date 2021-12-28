@@ -11,3 +11,5 @@ serde = {version= "1.0.130", features = ["derive"]}
 ftp-client = "0.1.2"
 chrono = "0.4"
 exitcode = "1.1.2"
+clap = "~2.27.0"
+loading = "0.1.2"

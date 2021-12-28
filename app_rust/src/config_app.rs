@@ -2,6 +2,7 @@ use std::io;
 use std::io::Write;
 use std::process::exit;
 use serde::{Serialize, Deserialize};
+use crate::ftp;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigApp {
@@ -41,9 +42,13 @@ impl ConfigApp {
     }
 
     pub fn require_config_data(&mut self){
+        self.ftp_url= String::new();
+        self.ftp_user= String::new();
+        self.ftp_password= String::new();
+        self.directory_guias_cpm= String::new();
 
         println!("************************************************");
-        println!("**         DATOS DE ACCESO A FTP ECLIPSE      **");
+        println!("**         CONFIGURACIÓN DE APLICACIÓN        **");
         println!("************************************************\n\n");
         println!("Para poder ejecutar el programa correctamente es necesario que ingreses los siguientes datos:\n");
 
@@ -76,8 +81,9 @@ impl ConfigApp {
         self.ftp_password= self.ftp_password.trim().to_string();
         self.directory_guias_cpm= self.directory_guias_cpm.trim().to_string();
         self.is_it_configured= true;
-        confy::store("app-rust-ftp", self).unwrap();
+        confy::store("app-rust-ftp", &self).unwrap();
 
+        dbg!(&self);
         println!("************");
         print!(" Configuración exitosa, desea correr imagenes? (Si/No): ");
         io::stdout().flush().unwrap();
@@ -93,5 +99,6 @@ impl ConfigApp {
         if run_images != "si" {
             exit(exitcode::OK)
         };
+        ftp::start_image_processing(&self)
     }
 }
