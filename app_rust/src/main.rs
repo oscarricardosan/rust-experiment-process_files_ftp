@@ -1,7 +1,7 @@
 mod config_app;
 mod ftp;
 
-use std::process::exit;
+use std::sync::{Arc, Mutex};
 use clap::{App, Arg, SubCommand};
 use crate::config_app::ConfigApp;
 
@@ -32,10 +32,10 @@ fn main() {
         .get_matches();
 
 
-    let mut config_app = ConfigApp::new();
+    let config_app = Arc::new(Mutex::new(ConfigApp::new()));
 
-    if !config_app.is_configured(){
-        config_app.require_config_data();
+    if !config_app.lock().unwrap().is_configured(){
+        config_app.lock().unwrap().require_config_data();
     }
 
     // You can also match on a subcommand's name
@@ -43,13 +43,12 @@ fn main() {
         Some("setup") => {
             let math_subcommand= matches.subcommand_matches("setup").unwrap();
             if math_subcommand.is_present("show") {
-                dbg!(config_app);
-                exit(exitcode::OK);
+                config_app.lock().unwrap().show_config();
             } else {
-                config_app.require_config_data();
+                config_app.lock().unwrap().require_config_data();
             }
         },
-        Some("start") => ftp::start_image_processing(&config_app),
+        Some("start") => ftp::start_image_processing(config_app.clone()),
         None => println!("Subcomando a ejecutar no especificado."),
         _ => println!("Subcomando especificado no es reconocido."),
     }

@@ -2,7 +2,6 @@ use std::io;
 use std::io::Write;
 use std::process::exit;
 use serde::{Serialize, Deserialize};
-use crate::ftp;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigApp {
@@ -99,6 +98,10 @@ impl ConfigApp {
         if run_images != "si" {
             exit(exitcode::OK)
         };
-        ftp::start_image_processing(&self)
+        // ftp::start_image_processing(&self)
+    }
+
+    pub fn show_config(&self){
+        dbg!(self);
     }
 }
