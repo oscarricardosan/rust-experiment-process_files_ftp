@@ -1,5 +1,6 @@
 mod config_app;
 mod ftp;
+mod thread_pool;
 
 use std::sync::{Arc, Mutex};
 use clap::{App, Arg, SubCommand};
