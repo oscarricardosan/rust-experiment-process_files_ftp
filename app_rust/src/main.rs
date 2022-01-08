@@ -2,16 +2,16 @@ mod config_app;
 mod ftp;
 mod thread_pool;
 
-use std::sync::{Arc, Mutex};
 use clap::{App, Arg, SubCommand};
 use crate::config_app::ConfigApp;
+use crate::ftp::Ftp;
 
 
 fn main() {
     let matches = App::new("FtpReader")
         .version("1.0")
         .author("Oscar Sánchez. <oscar.sanchez@savne.net>")
-        .about("Aplicación para la conexión a FTP y obtención de archivos con un pool de 4 conexiones")
+        .about("Aplicación para la conexión a FTP y obtención de archivos con un pool de 20 conexiones")
         .subcommand(
             SubCommand::with_name("setup")
                 .about("Configurar aplicación")
@@ -33,10 +33,10 @@ fn main() {
         .get_matches();
 
 
-    let config_app = Arc::new(Mutex::new(ConfigApp::new()));
+    let mut config_app = ConfigApp::new();
 
-    if !config_app.lock().unwrap().is_configured(){
-        config_app.lock().unwrap().require_config_data();
+    if !config_app.is_configured(){
+        config_app.require_config_data();
     }
 
     // You can also match on a subcommand's name
@@ -44,14 +44,19 @@ fn main() {
         Some("setup") => {
             let math_subcommand= matches.subcommand_matches("setup").unwrap();
             if math_subcommand.is_present("show") {
-                config_app.lock().unwrap().show_config();
+                config_app.show_config();
             } else {
-                config_app.lock().unwrap().require_config_data();
+                config_app.require_config_data();
             }
         },
-        Some("start") => ftp::start_image_processing(config_app.clone()),
-        None => println!("Subcomando a ejecutar no especificado."),
-        _ => println!("Subcomando especificado no es reconocido."),
+        Some("start") => {
+            let mut ftp= Ftp::new(config_app);
+            ftp.start_image_processing();
+            // dbg!(ftp);
+            // ftp::start_image_processing(config_app.clone())
+        },
+        None => println!("Subcomando a ejecutar no especificado, para mas información especifique la bandera --help."),
+        _ => println!("Subcomando especificado no es reconocido, para mas información especifique la bandera --help."),
     }
 
 

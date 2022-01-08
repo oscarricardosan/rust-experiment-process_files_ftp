@@ -1,7 +1,9 @@
 use std::{fmt, thread};
 use std::sync::{Arc, mpsc, Mutex};
+use ftp_client::prelude::Client;
+use crate::config_app::FtpAttributes;
 
-type Job = Box<dyn FnOnce() + Send + 'static>;
+type Job = Box<dyn FnOnce(Arc<Mutex<Client>>) + Send + 'static>;
 pub enum Message {
     NewJob(Job),
     Terminate,
@@ -23,18 +25,28 @@ pub struct ThreadPool{
 
 pub struct Worker{
     id: usize,
-    thread: Option<thread::JoinHandle<()>>,
+    thread: Option<thread::JoinHandle<()>>
 }
 
 impl Worker{
-    pub fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>)-> Worker {
+    pub fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>, ftp_attrs: &FtpAttributes)-> Worker {
+
+        let mut ftp_client= Client::connect(
+            &ftp_attrs.ftp_url,
+            &ftp_attrs.ftp_user,
+            &ftp_attrs.ftp_password
+        ).unwrap();
+        ftp_client.binary().unwrap();
+
+        let ftp_client= Arc::new(Mutex::new(ftp_client));
+        println!("Conección con FTP para worker {} establecida exitosamente", id);
         let thread = thread::spawn(move || loop {
             let message = receiver.lock().unwrap().recv().unwrap();
 
             match message {
                 Message::NewJob(job) => {
                     // println!("Worker {} got a job; executing.", id);
-                    job();
+                    job(ftp_client.clone());
                 }
                 Message::Terminate => {
                     break;
@@ -48,7 +60,7 @@ impl Worker{
 
 impl ThreadPool {
 
-    pub fn new(size: usize) -> Result<ThreadPool, PoolCreationError> {
+    pub fn new(size: usize,ftp_attrs: FtpAttributes) -> Result<ThreadPool, PoolCreationError> {
         if size <= 0 {
             return Err(PoolCreationError);
         }
@@ -60,7 +72,13 @@ impl ThreadPool {
         let mut workers = Vec::with_capacity(size);
 
         for id in 0..size {
-            workers.push(Worker::new(id, Arc::clone(&receiver)))
+            workers.push(
+                Worker::new(
+                    id,
+                    Arc::clone(&receiver),
+                    &ftp_attrs
+                )
+            )
         }
         Ok(ThreadPool{
             workers, sender
@@ -69,7 +87,7 @@ impl ThreadPool {
 
     pub fn execute<F>(&self, f: F)
         where
-            F: FnOnce() + Send + 'static,
+            F: FnOnce(Arc<Mutex<Client>>) + Send + 'static,
     {
         let job = Box::new(f);
 

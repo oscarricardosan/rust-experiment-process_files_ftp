@@ -2,6 +2,7 @@ use std::io;
 use std::io::Write;
 use std::process::exit;
 use serde::{Serialize, Deserialize};
+use crate::{Ftp};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigApp {
@@ -14,6 +15,15 @@ pub struct ConfigApp {
     is_it_configured: bool,
     version: f32,
 }
+
+#[derive(Debug, Clone)]
+pub struct FtpAttributes{
+    pub ftp_url: String,
+    pub ftp_user: String,
+    pub ftp_password: String,
+    pub directory_guias_cpm: String,
+}
+
 impl Default for ConfigApp {
     fn default() -> Self {
         Self {
@@ -98,10 +108,21 @@ impl ConfigApp {
         if run_images != "si" {
             exit(exitcode::OK)
         };
-        // ftp::start_image_processing(&self)
+        let mut ftp= Ftp::new(ConfigApp::new());
+        ftp.start_image_processing();
     }
 
     pub fn show_config(&self){
         dbg!(self);
+    }
+
+    pub fn get_ftp_attributes(&self)->FtpAttributes {
+        FtpAttributes {
+            ftp_url: self.ftp_url.clone(),
+            ftp_user: self.ftp_user.clone(),
+            ftp_password: self.ftp_password.clone(),
+            directory_guias_cpm: self.directory_guias_cpm.clone(),
+        }
+
     }
 }
