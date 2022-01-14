@@ -64,7 +64,9 @@ impl Ftp {
         }
 
         let total_threads = if files.len() < 20 {
-            files.len()
+            5
+        } else if (files.len() < 50) {
+            10
         } else { 20 };
 
         let pool = ThreadPool::new(total_threads, self.config_app.get_ftp_attributes()).unwrap_or_else(
@@ -90,6 +92,7 @@ impl Ftp {
             if total_files_processed == files.len() as i64{
                 break;
             }
+            println!("Archivo procesado {} de {}",total_files_processed, total_files_processed);
         }
 
         println!("Proceso finalizado");
@@ -105,6 +108,9 @@ impl Ftp {
         pool.execute(move |ftp_client| {
             let mut loading = Loading::new();
             loading.start();
+            loading.info(
+                format!("{}) {} Inicia procesamiento de archivo {}.", real_index, Local::now().format("%Y-%m-%d %H:%M:%S"), file_origin_path)
+            );
             match ftp_client.lock().unwrap().retrieve_file(&file_origin_path) {
                 Ok(retr) => {
                     let part_name = file_origin_path.split('/');
@@ -122,6 +128,7 @@ impl Ftp {
                             error.to_string()
                         )
                     );
+                    println!("Funcione luego de error");
                 }
             }
             loading.end();

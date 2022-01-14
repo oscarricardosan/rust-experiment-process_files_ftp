@@ -8,9 +8,12 @@ RUN apt install curl -y
 RUN apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev -y
 RUN apt install pkg-config -y
 
+#instalacion de RUST
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 RUN rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/process_files_in_ftp
 
-#CMD ["cargo", "run start"]
 ENTRYPOINT ["tail", "-f", "/dev/null"]

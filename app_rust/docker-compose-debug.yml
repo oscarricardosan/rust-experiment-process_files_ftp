@@ -5,6 +5,6 @@ services:
     container_name: app-rust-to-ftp
     build: 
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.Debug
     volumes:
       - .:/home/process_files_in_ftp
