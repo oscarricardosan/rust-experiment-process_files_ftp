@@ -2,7 +2,9 @@ mod config_app;
 mod ftp;
 mod thread_pool;
 
+use std::time::Instant;
 use clap::{App, Arg, SubCommand};
+use loading::Loading;
 use crate::config_app::ConfigApp;
 use crate::ftp::Ftp;
 
@@ -30,6 +32,18 @@ fn main() {
                 .version("1.0")
                 .author("Oscar Sánchez")
         )
+        .subcommand(
+            SubCommand::with_name("total-files")
+                .about("Cuenta los archivos disponibles en la carpeta ftp")
+                .version("1.0")
+                .author("Oscar Sánchez")
+        )
+        .subcommand(
+            SubCommand::with_name("show-setup")
+                .about("Muestra la configuración de la aplicación")
+                .version("1.0")
+                .author("Oscar Sánchez")
+        )
         .get_matches();
 
 
@@ -50,14 +64,36 @@ fn main() {
             }
         },
         Some("start") => {
-            let mut ftp= Ftp::new(config_app);
+            let now = Instant::now();
+
+            let mut ftp= Ftp::new(config_app.get_ftp_attributes());
             ftp.start_image_processing();
-            // dbg!(ftp);
-            // ftp::start_image_processing(config_app.clone())
+
+            let elapsed = now.elapsed();
+            println!("*******************************************************");
+            println!("**                                                   **");
+            println!("**            Tiempo transcurrido: {:.2?}          ", elapsed);
+            println!("**                                                   **");
+            println!("*******************************************************");
         },
-        None => println!("Subcomando a ejecutar no especificado, para mas información especifique la bandera --help."),
-        _ => println!("Subcomando especificado no es reconocido, para mas información especifique la bandera --help."),
+        Some("total-files") => {
+            let mut ftp= Ftp::new(config_app.get_ftp_attributes());
+            ftp.print_total_files();
+        },
+        Some("show-setup") => {
+            config_app.show_config();
+        },
+        None | _ => {
+            print_message_no_command();
+        }
     }
 
+}
 
+fn print_message_no_command() {
+    print!("\n\n");
+    let mut loading = Loading::new();
+    loading.start();
+    loading.warn("Subcomando a ejecutar no valido, para más información sobre el uso de esta aplicación ejecute el comando --help\n\n");
+    loading.end();
 }

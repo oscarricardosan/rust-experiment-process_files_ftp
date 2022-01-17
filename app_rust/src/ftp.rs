@@ -3,29 +3,29 @@ use std::process::exit;
 use std::sync::mpsc;
 use chrono::Local;
 use loading::Loading;
-use crate::ConfigApp;
 
 use std::sync::Arc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Mutex;
 use ftp_client::client::Client;
+use crate::config_app::FtpAttributes;
 use crate::thread_pool::ThreadPool;
 
 pub struct Ftp {
     pub ftp_client: Arc<Mutex<Client>>,
-    pub config_app: ConfigApp
+    pub ftp_atributes: FtpAttributes
 }
 impl Ftp {
-    pub fn new(config_app: ConfigApp) -> Self {
+    pub fn new(ftp_atributes: FtpAttributes) -> Self {
         Self{
             ftp_client: Arc::new(
                 Mutex::new(
                     Client::connect(
-                        &config_app.ftp_url, &config_app.ftp_user, &config_app.ftp_password
+                        &ftp_atributes.ftp_url, &ftp_atributes.ftp_user, &ftp_atributes.ftp_password
                     ).unwrap()
                 )
             ),
-            config_app
+            ftp_atributes
         }
     }
 
@@ -44,7 +44,7 @@ impl Ftp {
             ftp_client.binary().unwrap();
             loading.success("Conexión exitosa con FTP");
 
-            let files = ftp_client.list_names(&self.config_app.directory_guias_cpm).unwrap();
+            let files = ftp_client.list_names(&self.ftp_atributes.directory_guias_cpm).unwrap();
             loading.success("Obtención de listado con archivos en FTP exitosa");
             loading.info(format!("Se inicia procesamiento de {} archivo(s): ", files.len()));
             loading.end();
@@ -64,12 +64,14 @@ impl Ftp {
         }
 
         let total_threads = if files.len() < 20 {
+            1
+        } else if files.len() < 50 {
             5
-        } else if (files.len() < 50) {
+        } else if files.len() < 100 {
             10
         } else { 20 };
 
-        let pool = ThreadPool::new(total_threads, self.config_app.get_ftp_attributes()).unwrap_or_else(
+        let pool = ThreadPool::new(total_threads, self.ftp_atributes.clone()).unwrap_or_else(
             |err|{
                 println!("Error al generar pool de conexiones: {}", err);
                 exit(1)
@@ -135,6 +137,22 @@ impl Ftp {
             sender.send(1 as i64).unwrap();
         });
 
+    }
+
+
+    pub fn print_total_files(&mut self) {
+        let mut loading = Loading::new();
+        loading.start();
+        loading.info("Iniciando conexión con FTP");
+
+        let mut ftp_client= self.ftp_client.lock().unwrap();
+        ftp_client.binary().unwrap();
+        loading.success("Conexión exitosa con FTP");
+
+        let files = ftp_client.list_names(&self.ftp_atributes.directory_guias_cpm).unwrap();
+        loading.info(format!("Total archivos en FTP: {}", files.len()));
+        loading.end();
+        ftp_client.logout().unwrap();
     }
 
 

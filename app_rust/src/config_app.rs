@@ -108,7 +108,7 @@ impl ConfigApp {
         if run_images != "si" {
             exit(exitcode::OK)
         };
-        let mut ftp= Ftp::new(ConfigApp::new());
+        let mut ftp= Ftp::new(self.get_ftp_attributes());
         ftp.start_image_processing();
     }
 
