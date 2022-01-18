@@ -7,6 +7,7 @@ use loading::Loading;
 use std::sync::Arc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Mutex;
+use std::time::Instant;
 use ftp_client::client::Client;
 use crate::config_app::FtpAttributes;
 use crate::thread_pool::ThreadPool;
@@ -80,6 +81,7 @@ impl Ftp {
 
         let (tx, rx): (Sender<i64>, Receiver<i64>) = mpsc::channel();
 
+        let now = Instant::now();
         for (index, file_origin_path) in files.iter().enumerate() {
             let real_index= index +1;
             self.copy_file_to_local(
@@ -98,6 +100,13 @@ impl Ftp {
         }
 
         println!("Proceso finalizado");
+
+        let elapsed = now.elapsed();
+        println!("*******************************************************");
+        println!("**                                                   **");
+        println!("**            Tiempo transcurrido: {:.2?}          ", elapsed);
+        println!("**                                                   **");
+        println!("*******************************************************");
     }
 
 

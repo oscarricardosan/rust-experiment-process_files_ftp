@@ -2,7 +2,6 @@ mod config_app;
 mod ftp;
 mod thread_pool;
 
-use std::time::Instant;
 use clap::{App, Arg, SubCommand};
 use loading::Loading;
 use crate::config_app::ConfigApp;
@@ -64,17 +63,9 @@ fn main() {
             }
         },
         Some("start") => {
-            let now = Instant::now();
 
             let mut ftp= Ftp::new(config_app.get_ftp_attributes());
             ftp.start_image_processing();
-
-            let elapsed = now.elapsed();
-            println!("*******************************************************");
-            println!("**                                                   **");
-            println!("**            Tiempo transcurrido: {:.2?}          ", elapsed);
-            println!("**                                                   **");
-            println!("*******************************************************");
         },
         Some("total-files") => {
             let mut ftp= Ftp::new(config_app.get_ftp_attributes());
