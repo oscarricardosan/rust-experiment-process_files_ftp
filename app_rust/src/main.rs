@@ -2,8 +2,10 @@ mod config_app;
 mod ftp;
 mod thread_pool;
 
+use chrono::DateTime;
 use clap::{App, Arg, SubCommand};
 use loading::Loading;
+use postgres::{Client, NoTls};
 use crate::config_app::ConfigApp;
 use crate::ftp::Ftp;
 
@@ -45,6 +47,14 @@ fn main() {
         )
         .get_matches();
 
+    let mut client= get_connection_postgres();
+
+    let name = DateTime::parse_from_str("2014-11-28 21:00:09 +09:00", "%Y-%m-%d %H:%M:%S %z");
+    let data:i8 = 15;
+    client.execute(
+        "INSERT INTO executions (start_at, total_files) VALUES ($1, $2)",
+        &[&name, &data],
+    ).unwrap();
 
     let mut config_app = ConfigApp::new();
 
@@ -87,4 +97,16 @@ fn print_message_no_command() {
     loading.start();
     loading.warn("Subcomando a ejecutar no valido, para más información sobre el uso de esta aplicación ejecute el comando --help\n\n");
     loading.end();
+}
+
+fn get_connection_postgres()->Client {
+    let user= "savne";
+    let password= "secret";
+    let host= "app-rust-ftp-postgres:5432";
+    let db= "ftp";
+    let mut client= Client::connect(
+    format!("postgresql://{}:{}@{}/{}", user, password, host, db).as_str()
+    , NoTls
+    ).unwrap();
+    client
 }

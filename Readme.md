@@ -78,8 +78,20 @@ cd /home/process_files/app_rust
 
 #En otra pestaña:
 cd /home/process_files/app_rust/
+docker-compose -f docker-compose.yml up 
 docker exec -it app-rust-to-ftp bash
 
 
 ```
 
+
+## Base de datos
+
+``` bash
+#Conectar a contenedor
+docker exec -it app-rust-ftp-postgres bash
+
+#Ingresar a BD
+psql -U savne -d ftp
+
+```
