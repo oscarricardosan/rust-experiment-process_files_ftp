@@ -2,8 +2,9 @@ use std::{fmt, thread};
 use std::sync::{Arc, mpsc, Mutex};
 use ftp_client::prelude::Client;
 use crate::config_app::FtpAttributes;
+use crate::database;
 
-type Job = Box<dyn FnOnce(Arc<Mutex<Client>>) + Send + 'static>;
+type Job = Box<dyn FnOnce(Arc<Mutex<Client>>, Arc<Mutex<postgres::Client>>) + Send + 'static>;
 pub enum Message {
     NewJob(Job),
     Terminate,
@@ -40,13 +41,17 @@ impl Worker{
 
         let ftp_client= Arc::new(Mutex::new(ftp_client));
         println!("Conección con FTP para worker {} establecida exitosamente", id);
+
+        let connection_db= Arc::new(Mutex::new(database::get_connection_postgres()));
+        println!("Conección con BD para worker {} establecida exitosamente", id);
+
         let thread = thread::spawn(move || loop {
             let message = receiver.lock().unwrap().recv().unwrap();
 
             match message {
                 Message::NewJob(job) => {
                     // println!("Worker {} got a job; executing.", id);
-                    job(ftp_client.clone());
+                    job(ftp_client.clone(), connection_db.clone());
                 }
                 Message::Terminate => {
                     break;
@@ -87,7 +92,7 @@ impl ThreadPool {
 
     pub fn execute<F>(&self, f: F)
         where
-            F: FnOnce(Arc<Mutex<Client>>) + Send + 'static,
+            F: FnOnce(Arc<Mutex<Client>>, Arc<Mutex<postgres::Client>>) + Send + 'static,
     {
         let job = Box::new(f);
 

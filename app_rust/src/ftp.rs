@@ -1,20 +1,23 @@
 use std::{fs};
 use std::process::exit;
 use std::sync::mpsc;
-use chrono::Local;
+use chrono::{Local};
 use loading::Loading;
 
 use std::sync::Arc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Mutex;
-use std::time::Instant;
+use std::time::{Instant};
 use ftp_client::client::Client;
 use crate::config_app::FtpAttributes;
+use crate::db_execution_model::DbExecutionModel;
+use crate::db_file_model::DbFileModel;
 use crate::thread_pool::ThreadPool;
 
 pub struct Ftp {
     pub ftp_client: Arc<Mutex<Client>>,
-    pub ftp_atributes: FtpAttributes
+    pub ftp_atributes: FtpAttributes,
+    db_execution_model: DbExecutionModel,
 }
 impl Ftp {
     pub fn new(ftp_atributes: FtpAttributes) -> Self {
@@ -26,7 +29,8 @@ impl Ftp {
                     ).unwrap()
                 )
             ),
-            ftp_atributes
+            ftp_atributes,
+            db_execution_model: DbExecutionModel::new(),
         }
     }
 
@@ -55,6 +59,8 @@ impl Ftp {
         };
 
         let files= get_files();
+
+        self.db_execution_model.start_of_process( files.len() as i32);
 
         if files.len() == 0{
             let mut loading = Loading::new();
@@ -90,14 +96,15 @@ impl Ftp {
             );
         }
 
-        let mut total_files_processed:i64= 0;
+        let mut total_files_processed:i32= 0;
         for _received in rx {
             total_files_processed= total_files_processed+1;
-            if total_files_processed == files.len() as i64{
+            if total_files_processed == files.len() as i32{
                 break;
             }
             println!("Archivo procesado {} de {}",total_files_processed, total_files_processed);
         }
+        self.db_execution_model.end_of_process( total_files_processed);
 
         println!("Proceso finalizado");
 
@@ -116,12 +123,15 @@ impl Ftp {
         pool: &ThreadPool, real_index: usize, file_origin_path: String,
         sender: Sender<i64>
     ) {
-        pool.execute(move |ftp_client| {
+        let execution_id= self.db_execution_model.get_execution_id();
+        pool.execute(move |ftp_client, connection_db| {
             let mut loading = Loading::new();
             loading.start();
             loading.info(
                 format!("{}) {} Inicia procesamiento de archivo {}.", real_index, Local::now().format("%Y-%m-%d %H:%M:%S"), file_origin_path)
             );
+            let mut db_file_model= DbFileModel::new(execution_id, connection_db);
+            db_file_model.start_of_process(&file_origin_path);
             match ftp_client.lock().unwrap().retrieve_file(&file_origin_path) {
                 Ok(retr) => {
                     let part_name = file_origin_path.split('/');
@@ -142,6 +152,7 @@ impl Ftp {
                     println!("Funcione luego de error");
                 }
             }
+            db_file_model.end_of_process();
             loading.end();
             sender.send(1 as i64).unwrap();
         });
