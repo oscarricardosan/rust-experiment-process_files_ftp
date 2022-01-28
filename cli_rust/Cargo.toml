@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 tui = { version = "0.15", features = ["crossterm"], default-features = false }
 crossterm = "0.19"
+postgres = {version= "0.19.2", features = ["with-chrono-0_4"]}

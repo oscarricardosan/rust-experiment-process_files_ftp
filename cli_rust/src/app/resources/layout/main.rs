@@ -33,7 +33,21 @@ impl BaseLayout for LayoutMain {
                 Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD),
             )]),
             Spans::from(vec![Span::raw("")]),
-            Spans::from(vec![Span::raw("Para salir presione Ctrl + c. Para acceder a alguna opción presione Ctrl + la letra con subrayado que indica en el menú")]),
+            Spans::from(vec![Span::raw("")]),
+            Spans::from(vec![Span::raw("")]),
+            Spans::from(vec![Span::raw("")]),
+            Spans::from(vec![Span::raw("Para salir presione Alt + s.")]),
+            Spans::from(vec![Span::raw("")]),
+            Spans::from(vec![
+                Span::raw("Para acceder a una opción presione Alt + "),
+                Span::styled(
+                    "la letra subrayada",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::UNDERLINED),
+                ),
+                Span::raw(" como muestra el menú superior"),
+            ]),
         ])
             .alignment(Alignment::Center)
             .block(

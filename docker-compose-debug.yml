@@ -8,6 +8,7 @@ services:
       dockerfile: ../Dockerfile.Debug
     volumes:
       - ./app_rust:/home/process_files_in_ftp
+      - ./cli_rust:/home/cli_rust
     depends_on:
       - db-postgres
     networks:

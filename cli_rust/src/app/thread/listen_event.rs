@@ -27,6 +27,12 @@ impl ThreadListenEvent {
                     state_app.borrow_mut().current_menu= Menu::Help;
                 }
                 event::KeyEvent {
+                    code: KeyCode::Char('v'),
+                    modifiers: KeyModifiers::ALT,
+                }=> {
+                    state_app.borrow_mut().current_menu= Menu::ShowProcess;
+                }
+                event::KeyEvent {
                     code: KeyCode::Char('i'),
                     modifiers: KeyModifiers::ALT,
                 }=> {

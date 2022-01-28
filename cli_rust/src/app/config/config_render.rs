@@ -11,6 +11,7 @@ impl ConfigRender {
         ConfigRender {
             menu_titles: vec![
                 String::from("Inicio"),
+                String::from("Ver procesos"),
                 String::from("Ayuda"),
                 String::from("Salir")
             ],

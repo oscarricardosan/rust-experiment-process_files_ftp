@@ -6,11 +6,16 @@ use std::rc::Rc;
 use crossterm::event::{Event as CrosstermEvent, KeyEvent};
 use crossterm::terminal::{enable_raw_mode};
 use tui::backend::{Backend, CrosstermBackend};
+use tui::layout::{Alignment, Constraint, Direction, Layout};
+use tui::style::{Color, Modifier, Style};
 use tui::Terminal;
+use tui::text::Span;
+use tui::widgets::{Block, Borders, BorderType};
 use crate::app::config::config_render::ConfigRender;
-use crate::app::resources::layout::base::BaseLayout;
+use crate::app::resources::layout::base::{BaseLayout, render_footer, render_tabs};
 use crate::app::resources::layout::help::LayoutHelp;
 use crate::app::resources::layout::main::LayoutMain;
+use crate::app::resources::layout::show_process::LayoutShowProcess;
 use crate::app::thread::listen_event::ThreadListenEvent;
 use crate::app::thread::sender_event::ThreadSendEvent;
 
@@ -29,6 +34,7 @@ pub struct StateApp<T: Backend> {
 pub enum Menu{
     Main,
     Help,
+    ShowProcess,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -65,6 +71,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Menu::Help=> {
                     let layout= LayoutHelp::new(config_render);
                     layout.render(frame);
+                }
+                Menu::ShowProcess=> {
+                    let layout= LayoutShowProcess::new(config_render);
+                    layout.render_special_content(frame);
                 }
             }
         })?;
