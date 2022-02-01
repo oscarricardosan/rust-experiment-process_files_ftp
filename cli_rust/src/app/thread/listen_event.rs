@@ -48,7 +48,7 @@ impl ThreadListenEvent {
                     exit(0);
                 }
                 _ => {
-                    dbg!(event);
+                    // dbg!(event);
                 }
             },
             Event::Tick => {

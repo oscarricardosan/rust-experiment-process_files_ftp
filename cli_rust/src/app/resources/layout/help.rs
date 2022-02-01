@@ -2,17 +2,14 @@ use tui::layout::{Alignment};
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans};
 use tui::widgets::{Block, Borders, BorderType, Paragraph};
-use crate::app::config::config_render::ConfigRender;
 use crate::BaseLayout;
 
 pub struct LayoutHelp {
-    config_render: ConfigRender
 }
 
 impl LayoutHelp {
-    pub fn new(config_render: ConfigRender) -> LayoutHelp {
+    pub fn new() -> LayoutHelp {
         LayoutHelp {
-            config_render
         }
     }
 }

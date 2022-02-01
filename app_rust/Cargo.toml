@@ -16,7 +16,6 @@ exitcode = "1.1.2"
 clap = "~2.27.0"
 loading = "0.1.2"
 postgres = {version= "0.19.2", features = ["with-chrono-0_4"]}
-postgres-types = {version= "0.2.2", features = ["derive"]}
 
 [package.metadata.deb]
 copyright = "2022, Oscar Sánchez<oscar.sanchez@savne.net>"

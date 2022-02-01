@@ -6,12 +6,7 @@ use std::rc::Rc;
 use crossterm::event::{Event as CrosstermEvent, KeyEvent};
 use crossterm::terminal::{enable_raw_mode};
 use tui::backend::{Backend, CrosstermBackend};
-use tui::layout::{Alignment, Constraint, Direction, Layout};
-use tui::style::{Color, Modifier, Style};
 use tui::Terminal;
-use tui::text::Span;
-use tui::widgets::{Block, Borders, BorderType};
-use crate::app::config::config_render::ConfigRender;
 use crate::app::resources::layout::base::{BaseLayout, render_footer, render_tabs};
 use crate::app::resources::layout::help::LayoutHelp;
 use crate::app::resources::layout::main::LayoutMain;
@@ -20,6 +15,7 @@ use crate::app::thread::listen_event::ThreadListenEvent;
 use crate::app::thread::sender_event::ThreadSendEvent;
 
 mod app;
+mod database;
 
 pub enum Event{
     Input(KeyEvent),
@@ -60,20 +56,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     state_app.borrow_mut().terminal.clear()?;
 
     loop {
-        let config_render= ConfigRender::new();
         let current_menu= state_app.borrow_mut().current_menu;
         state_app.borrow_mut().terminal.draw(|frame| {
             match current_menu {
                 Menu::Main=> {
-                    let layout= LayoutMain::new(config_render);
+                    let layout= LayoutMain::new();
                     layout.render(frame);
                 }
                 Menu::Help=> {
-                    let layout= LayoutHelp::new(config_render);
+                    let layout= LayoutHelp::new();
                     layout.render(frame);
                 }
                 Menu::ShowProcess=> {
-                    let layout= LayoutShowProcess::new(config_render);
+                    let layout= LayoutShowProcess::new();
                     layout.render_special_content(frame);
                 }
             }

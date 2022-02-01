@@ -651,17 +651,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "postgres-derive"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a269d4442ff2c409dd0b854e9d4aa37fcd28237090e64bda7284b6e4731fb409"
-dependencies = [
- "proc-macro2",
- "quote 1.0.10",
- "syn 1.0.83",
-]
-
-[[package]]
 name = "postgres-protocol"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -688,7 +677,6 @@ dependencies = [
  "bytes",
  "chrono",
  "fallible-iterator",
- "postgres-derive",
  "postgres-protocol",
 ]
 
@@ -718,7 +706,6 @@ dependencies = [
  "ftp-client",
  "loading",
  "postgres",
- "postgres-types",
  "serde",
 ]
 
