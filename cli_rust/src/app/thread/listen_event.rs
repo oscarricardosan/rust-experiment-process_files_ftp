@@ -7,7 +7,7 @@ use crossterm::event;
 use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::terminal::disable_raw_mode;
 use tui::backend::{Backend};
-use crate::{Event, Menu, StateApp};
+use crate::{Action, Event, Menu, StateApp};
 
 pub struct ThreadListenEvent {
 }
@@ -47,6 +47,24 @@ impl ThreadListenEvent {
                     state_app.borrow_mut().terminal.clear()?;
                     exit(0);
                 }
+                event::KeyEvent {
+                    code: KeyCode::Down,
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    let mut state_temp=state_app.borrow_mut();
+                    if let Menu::ShowProcess = state_temp.current_menu{
+                        state_temp.action= Some(Action::KeyDown);
+                    }
+                },
+                event::KeyEvent {
+                    code: KeyCode::Up,
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    let mut state_temp=state_app.borrow_mut();
+                    if let Menu::ShowProcess = state_temp.current_menu{
+                        state_temp.action= Some(Action::KeyUp);
+                    }
+                },
                 _ => {
                     // dbg!(event);
                 }

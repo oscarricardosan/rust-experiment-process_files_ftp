@@ -22,9 +22,16 @@ pub enum Event{
     Tick,
 }
 
+#[derive(Copy, Clone)]
+pub enum Action{
+    KeyDown,
+    KeyUp,
+}
+
 pub struct StateApp<T: Backend> {
     current_menu: Menu,
     terminal: Terminal<T>,
+    action: Option<Action>,
 }
 #[derive(Copy, Clone)]
 pub enum Menu{
@@ -48,6 +55,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             StateApp{
                 current_menu: Menu::Main,
                 terminal,
+                action: None
             }
         )
     );
@@ -55,25 +63,28 @@ fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode().expect("cant run in raw mode");
     state_app.borrow_mut().terminal.clear()?;
 
+    let layout_main= LayoutMain::new();
+    let layout_help= LayoutHelp::new();
+    let mut layout_processes= LayoutShowProcess::new();
     loop {
-        let current_menu= state_app.borrow_mut().current_menu;
+        let current_menu= state_app.borrow().current_menu;
+        let current_action= state_app.borrow().action;
+        layout_processes.set_current_action(current_action);
         state_app.borrow_mut().terminal.draw(|frame| {
             match current_menu {
                 Menu::Main=> {
-                    let layout= LayoutMain::new();
-                    layout.render(frame);
+                    layout_main.render(frame);
                 }
                 Menu::Help=> {
-                    let layout= LayoutHelp::new();
-                    layout.render(frame);
+                    layout_help.render(frame);
                 }
                 Menu::ShowProcess=> {
-                    let layout= LayoutShowProcess::new();
-                    layout.render_special_content(frame);
+                    layout_processes.render_special_content(frame);
                 }
             }
         })?;
 
+        state_app.borrow_mut().action= None;
         ThreadListenEvent::handle(rx.clone(), state_app.clone())?;
     }
 

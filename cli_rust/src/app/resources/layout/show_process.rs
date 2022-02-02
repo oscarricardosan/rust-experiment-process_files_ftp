@@ -1,26 +1,40 @@
+use std::cell::RefCell;
 use std::io::Stdout;
+use std::process::exit;
+use std::rc::Rc;
 use chrono::NaiveDateTime;
 use tui::backend::CrosstermBackend;
 use tui::Frame;
-use tui::layout::{Constraint, Direction, Layout, Rect};
+use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Modifier, Style};
+use tui::text::Span;
 use tui::widgets::{Block, Borders, Cell, Gauge, List, ListItem, ListState, Paragraph, Row, Table, TableState};
 use crate::app::config::config_render::ConfigRender;
 use crate::app::resources::layout::base::BaseLayout;
-use crate::{render_footer, render_tabs};
+use crate::{Action, render_footer, render_tabs, StateApp};
 use crate::database::get_connection_postgres;
 
 pub struct LayoutShowProcess{
+    executions_in_db: Vec<postgres::Row>,
+    current_action: Option<Action>,
+    selected_index_list: usize
 }
 
 impl LayoutShowProcess {
 
     pub fn new ()-> LayoutShowProcess {
         LayoutShowProcess{
+            executions_in_db: Vec::new(),
+            current_action: None,
+            selected_index_list: 0
         }
     }
 
-    pub fn render_special_content(&self, frame: &mut Frame<CrosstermBackend<Stdout>>) {
+    pub fn set_current_action(&mut self, current_action: Option<Action>) {
+        self.current_action= current_action;
+    }
+
+    pub fn render_special_content(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>) {
 
         let config_render= ConfigRender::new();
 
@@ -51,12 +65,14 @@ impl LayoutShowProcess {
         frame.render_widget(render_footer(), panels[2]);
     }
 
-    fn render_list(&self, sub_panels: &Vec<Rect>,  frame: &mut Frame<CrosstermBackend<Stdout>>) {
+    fn render_list(&mut self, sub_panels: &Vec<Rect>,  frame: &mut Frame<CrosstermBackend<Stdout>>) {
 
         let mut items = Vec::new();
-        for row in get_connection_postgres().query(
+        self.executions_in_db= get_connection_postgres().query(
             "Select id, start_at, end_at, total_files from executions order by id desc limit 20", &[]
-        ).unwrap() {
+        ).unwrap();
+
+        for row in &self.executions_in_db {
             let id: i32 = row.get(0);
             let start_at: NaiveDateTime = row.get(1);
             let start_at= start_at.format("%d/%m %H:%M:%S").to_string();
@@ -65,8 +81,6 @@ impl LayoutShowProcess {
             let total_files: i32 = row.get(3);
             items.push(ListItem::new(format!("{}) {} - {} [{}]", id, start_at, end_at, total_files)))
         }
-
-
 
         let list= List::new(items)
             .block(
@@ -77,14 +91,48 @@ impl LayoutShowProcess {
             .style(Style::default().fg(Color::White))
             .highlight_style(Style::default().bg(Color::Green))
             .highlight_symbol(">>");
+
         let mut list_state= ListState::default();
-        list_state.select(Some(0));
+
+        match self.current_action {
+            Some(action)=> {
+                match action {
+                    Action::KeyDown=> {
+                        if self.selected_index_list < self.executions_in_db.len() -1{
+                            self.selected_index_list= self.selected_index_list+1
+                        }
+                    }
+                    Action::KeyUp=> {
+                        if self.selected_index_list >0{
+                            self.selected_index_list= self.selected_index_list-1
+                        }
+                    }
+                    _=> {}
+                }
+            }
+            None=> {}
+        }
+        list_state.select(Some(self.selected_index_list));
+
         frame.render_stateful_widget(list, sub_panels[0], &mut list_state);
     }
 
     fn render_table(&self, sub_panels: &Vec<Rect>,  frame: &mut Frame<CrosstermBackend<Stdout>>) {
-
+        dbg!(&self.executions_in_db[self.selected_index_list]);
         let mut items= vec![
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
+            vec!["Row11", "Row12", "Row13"],
             vec!["Row11", "Row12", "Row13"],
             vec!["Row21", "Row22", "Row23"],
             vec!["Row31", "Row32", "Row33"],
@@ -105,11 +153,6 @@ impl LayoutShowProcess {
             vec!["Row181", "Row182", "Row183"],
             vec!["Row191", "Row192", "Row193"],
         ];
-
-        let right_container = Block::default()
-            .borders(Borders::ALL)
-            .title("Log");
-
         let selected_style = Style::default().add_modifier(Modifier::REVERSED);
         let normal_style = Style::default().bg(Color::Blue);
         let header_cells = ["Header1", "Header2", "Header3"]
@@ -131,9 +174,38 @@ impl LayoutShowProcess {
         });
         let mut state= TableState::default();
         state.select(Some(1));
-        let t = Table::new(rows)
+
+        // Two vertical panels
+        let grid_vertical_subpanel_1 = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(5), Constraint::Length(3)].as_ref())
+            .split(sub_panels[1]);
+
+        let grid_horizontal_subpanel_1_2 = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(80), Constraint::Length(20)].as_ref())
+            .split(grid_vertical_subpanel_1[0]);
+
+        let gauge = Gauge::default()
+            .gauge_style(Style::default().fg(Color::Yellow))
+            .ratio(0.7 as f64)
+            .block(
+                Block::default()
+                    .style(Style::default().bg(Color::Black))
+                    .borders(Borders::ALL)
+            )
+            .label("Progreso")
+            .use_unicode(true);
+        frame.render_widget(gauge, grid_vertical_subpanel_1[1]);
+
+
+        let table= Table::new(rows)
             .header(header)
-            .block(right_container)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Log")
+            )
             .highlight_style(selected_style)
             .highlight_symbol(">> ")
             .widths(&[
@@ -141,15 +213,18 @@ impl LayoutShowProcess {
                 Constraint::Length(30),
                 Constraint::Min(10),
             ]);
-        frame.render_stateful_widget(t, sub_panels[1], &mut state);
+        frame.render_stateful_widget(table, grid_horizontal_subpanel_1_2[0], &mut state);
 
-        let gauge = Gauge::default()
-            .block(Block::default().title("Gauge3").borders(Borders::ALL))
-            .gauge_style(Style::default().fg(Color::Yellow))
-            .ratio(0.10 as f64)
-            .label("Progreso")
-            .use_unicode(true);
-        frame.render_widget(gauge, sub_panels[1]);
+
+        let paragraph= Paragraph::new("Datos de ejecución")
+            .style(Style::default())
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Inf. general")
+            )
+            .alignment(Alignment::Left);
+        frame.render_widget(paragraph, grid_horizontal_subpanel_1_2[1]);
     }
 }
 
