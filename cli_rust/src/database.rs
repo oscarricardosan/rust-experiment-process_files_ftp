@@ -6,7 +6,7 @@ pub fn get_connection_postgres()->Client {
     let password= "secret";
     let host= "app-rust-ftp-postgres:5432";
     let db= "ftp";
-    let mut client= Client::connect(
+    let client= Client::connect(
         format!("postgresql://{}:{}@{}/{}", user, password, host, db).as_str()
         , NoTls
     ).unwrap();
